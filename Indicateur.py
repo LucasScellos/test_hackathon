@@ -19,8 +19,18 @@ if commune !="Commune":
     c2.plotly_chart(fig2)
 scenario = col12.selectbox("Scénario Climatique", ["Scénario", "RCP2.6", "RCP4.5" , "RCP8.5"])
 ind = col11.selectbox("Choississez un indicateur", ["Température Max","Température Moyenne",  "Température Min", "Température Seuil"])
+date_perso = col11.checkbox("Date Personnalisée")
+
+#selection date
+if date_perso:
+    exc1 = c1.expander("Sélection Date Personnalisée")
+    exc11, exc12 = exc1.columns(2)
+    start_day = exc11.number_input('Start Day', min_value=1, max_value=31, value=1)
+    start_month = exc12.number_input('Start Month', min_value=1, max_value=12, value=1)
+    end_day = exc11.number_input('End Day', min_value=1, max_value=31, value=1)
+    end_month = exc12.number_input('End Month', min_value=1, max_value=12, value=1)
+
 if ind == "Température Seuil":
-    #col3, col4 = col12.columns(2)
     nb_jour_cons = col12.number_input("Séléctionner un nombre de jour consécutif",1,365)
     seuil = col12.number_input("Séléctionner une température seuil (°C)", -10, 45)
     choix_seuil = col12.radio("Choix seuil", ["Température Min", "Température Supérieur"])
@@ -28,14 +38,21 @@ if ind == "Température Seuil":
         signe = "-"
     else:
         signe = "+"
-
     #drias
     df = pd.read_csv("data/drias_montpellier_df.csv")
     df["T_Q"] = df["T_Q"]-273.15
-    test = uh.calc_nb_episode(df, seuil, signe, nb_jour_cons)
+    
+    df_drias = uh.calc_nb_episode(df, seuil, signe, nb_jour_cons)
     #mf
     df_2 = pd.read_csv("data/Serie_tempo_T_montpellier_daily_1959_2024.csv")
-    test_2 = uh.calc_nb_episode(df_2, seuil, signe, nb_jour_cons)
+    df_mf = uh.calc_nb_episode(df_2, seuil, signe, nb_jour_cons)
+    st.dataframe(df_mf)
+    st.dataframe(df_drias)
+
+    
+
+
+
 
 if (ind=="Température Max"):
     df_drias_ind = pd.read_csv("data/test_plot.csv")

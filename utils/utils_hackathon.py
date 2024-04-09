@@ -34,13 +34,12 @@ def map_commune(commune, latitude, longitude):
     return fig
 
 #tania
-def filtre_temporel(df, date_debut, date_fin):
-
-    date_debut = pd.to_datetime(date_debut).strftime('%Y-%m-%d')
-    date_fin = pd.to_datetime(date_fin).strftime('%Y-%m-%d')
-
-    df_filtre = df[(df['DATE'] >= date_debut) & (df['DATE'] <= date_fin)]
-
+def filtre_temporel_periode(df, date_debut, date_fin):
+    date_debut = pd.to_datetime(date_debut, format='%m-%d')
+    date_fin = pd.to_datetime(date_fin, format='%m-%d')
+    df['Mois-Jour'] = df['DATE'].dt.strftime('%m-%d')
+    df_filtre = df[(df['Mois-Jour'] >= date_debut.strftime('%m-%d')) & (df['Mois-Jour'] <= date_fin.strftime('%m-%d'))]
+    df_filtre  = df_filtre.drop("Mois-Jour", axis=1)
     return df_filtre
 
 def apply_fct (df, func):
@@ -133,7 +132,8 @@ def load_csv (df_index) :
 
 
 def corr_df (df) :
-    return df[["index",0]].corr()[0]["index"]
+    print(df)
+    return df[["index",0]].corr()#[0]["index"]
 
 
 
@@ -148,7 +148,7 @@ def modele_baseline_train (df):
 
 def plot_reg (df, regr) :
     
-    y_pred = regr.predict(df["index"])
+    y_pred = regr.predict([["index"]])
     fig = go.Figure()
     # Add traces
     X, _,_ = df[["index"]], df[0], df["DATE"]
@@ -156,7 +156,7 @@ def plot_reg (df, regr) :
     fig.add_trace(go.Scatter(x=df["index"], y=df[0],
                         mode='markers',
                         name='observations'))
-    fig.add_trace(go.Scatter(x=X, y=y_pred,
+    fig.add_trace(go.Scatter(x=df["index"], y=y_pred,
                         mode='lines+markers',
                         name='predictions'))
     return fig
@@ -179,9 +179,10 @@ def plot_reg_temporel (df, regr) :
     return fig
 
 
-def main_inspect_csv(df_index):
-    df = load_csv (df_index)
-    corr = corr_df (df)
+def main_inspect_csv(df, df_mf):
+    #df = load_csv (df_index)
+    df = create_df_index_var_metier(df, df_mf)
+    corr = corr_df(df)
     #st.write(f"Correlation entre la variable et l'indicateur climatique : \n{}")
 
     regr = modele_baseline_train (df)
