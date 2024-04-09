@@ -25,10 +25,12 @@ date_perso = col11.checkbox("Date Personnalisée")
 if date_perso:
     exc1 = c1.expander("Sélection Date Personnalisée")
     exc11, exc12 = exc1.columns(2)
-    start_day = exc11.number_input('Start Day', min_value=1, max_value=31, value=1)
-    start_month = exc12.number_input('Start Month', min_value=1, max_value=12, value=1)
-    end_day = exc11.number_input('End Day', min_value=1, max_value=31, value=1)
-    end_month = exc12.number_input('End Month', min_value=1, max_value=12, value=1)
+    start_day  = exc11.text_input("Date de Départ", "01/01")
+    end_day = exc12.text_input("Date de Fin", "31/12")
+    # start_day = exc11.number_input('Start Day', min_value=1, max_value=31, value=1)
+    # start_month = exc12.number_input('Start Month', min_value=1, max_value=12, value=1)
+    # end_day = exc11.number_input('End Day', min_value=1, max_value=31, value=1)
+    # end_month = exc12.number_input('End Month', min_value=1, max_value=12, value=1)
 
 if ind == "Température Seuil":
     nb_jour_cons = col12.number_input("Séléctionner un nombre de jour consécutif",1,365)
@@ -53,10 +55,11 @@ if ind == "Température Seuil":
 
 
 
-
-if (ind=="Température Max"):
+if (ind=="Température Max" and commune=="Montpellier"):
     df_drias_ind = pd.read_csv("data/test_plot.csv")
-    fig = uh.plot_climate_strips(df_drias_ind, "T_MAX", "01/08", "31/08",dict_indicateurs)
+    #df = uh.filtre_temporel_periode(df, "01-07", "30-09")
+    fig = uh.plot_climate_strips(df_drias_ind, "T_MAX", "01/07", "30/09",dict_indicateurs)
+
     st.plotly_chart(fig, width=2000)
 
 
