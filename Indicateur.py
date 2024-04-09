@@ -12,7 +12,7 @@ col11, col12 = ctn.columns(2)
 fig2 = uh.map_commune("Montpellier", [43.61361315241169], [3.875541887925083])
 
 
-
+end_day=False
 
 commune = col11.selectbox("Choississez votre commune", ["Commune", "Marseille", "Montpellier", "Niort"])
 if commune !="Commune":
@@ -51,18 +51,26 @@ if ind == "Température Seuil":
     st.dataframe(df_mf)
     st.dataframe(df_drias)
 
-    
 
 
-
-if (ind=="Température Max" and commune=="Montpellier"):
+if (ind=="Température Max" and commune=="Montpellier" and end_day=="30/09"):
     df_drias_ind = pd.read_csv("data/test_plot.csv")
     #df = uh.filtre_temporel_periode(df, "01-07", "30-09")
     fig = uh.plot_climate_strips(df_drias_ind, "T_MAX", "01/07", "30/09",dict_indicateurs)
 
     st.plotly_chart(fig, width=2000)
 
+#metrique
+nb_1 = 5
+nb_2 = 8
+nb_3 = 11
 
+if ((ind == "Température Seuil") or (ind=="Température Max")):
+    container = st.expander("Nb jour supérieur à 25°C", expanded=True)
+    col1, col2, col3 = container.columns(3)
+    col1.metric("Horizon 1995", nb_1)
+    col2.metric("Horizon 2020", nb_2, str(nb_2-nb_1)+" jours par rapport à la période de référence")
+    col3.metric("Horizon 2050", nb_3, str(nb_3-nb_1)+" jours par rapport à la période de référence")
 
 
 
