@@ -44,12 +44,9 @@ if ind == "Température Seuil":
     df = pd.read_csv("data/drias_montpellier_df.csv")
     df["T_Q"] = df["T_Q"]-273.15
     
-    df_drias = uh.calc_nb_episode(df, seuil, signe, nb_jour_cons)
     #mf
     df_2 = pd.read_csv("data/Serie_tempo_T_montpellier_daily_1959_2024.csv")
-    df_mf = uh.calc_nb_episode(df_2, seuil, signe, nb_jour_cons)
-    st.dataframe(df_mf)
-    st.dataframe(df_drias)
+    fig = uh.main_indic(df, df_2, indicateur="Nb_jours_max", seuil=seuil,  periode_start=start_day, periode_end=end_day, dict_indicateurs=dict_indicateurs, signe=signe)
 
 
 
@@ -65,7 +62,7 @@ nb_1 = 5
 nb_2 = 8
 nb_3 = 11
 
-if ((ind == "Température Seuil") or (ind=="Température Max")):
+if ((ind=="Température Max") and end_day=="30/09"):
     container = st.expander("Nb jour supérieur à 25°C", expanded=True)
     col1, col2, col3 = container.columns(3)
     col1.metric("Horizon 1995", nb_1)

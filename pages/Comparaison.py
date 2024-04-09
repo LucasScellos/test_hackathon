@@ -34,11 +34,12 @@ if ind == "Température Seuil":
     df_mf = uh.calc_nb_episode(df_2, seuil, signe, nb_jour_cons)
 
     df_millesime = st.file_uploader("Charger votre fichier CSV")
-    df_millesime = pd.read_csv(df_millesime)
-    df_millesime.drop(columns="Unnamed: 0", inplace=True)
-    corr, fig_reg, fig_temp = uh.main_inspect_csv(df_millesime, df_mf, df_drias)
-    st.plotly_chart(fig_reg)
-    st.plotly_chart(fig_temp)
+    if df_millesime != None:
+        df_millesime = pd.read_csv(df_millesime)
+        df_millesime.drop(columns="Unnamed: 0", inplace=True)
+        corr, fig_reg, fig_temp = uh.main_inspect_csv(df_millesime, df_mf, df_drias)
+        st.plotly_chart(fig_reg)
+        st.plotly_chart(fig_temp)
 
 
 

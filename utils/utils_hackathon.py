@@ -34,13 +34,14 @@ def map_commune(commune, latitude, longitude):
     return fig
 
 #tania
-def filtre_temporel(df, date_debut, date_fin):
+def filtre_temporel_periode(df, date_debut, date_fin):
+    df['DATE'] = pd.to_datetime(df['DATE'])
 
-    date_debut = pd.to_datetime(date_debut).strftime('%Y-%m-%d')
-    date_fin = pd.to_datetime(date_fin).strftime('%Y-%m-%d')
-
-    df_filtre = df[(df['DATE'] >= date_debut) & (df['DATE'] <= date_fin)]
-
+    date_debut = pd.to_datetime(date_debut, format='%m-%d')
+    date_fin = pd.to_datetime(date_fin, format='%m-%d')
+    df['Mois-Jour'] = df['DATE'].dt.strftime('%m-%d')
+    df_filtre = df[(df['Mois-Jour'] >= date_debut.strftime('%m-%d')) & (df['Mois-Jour'] <= date_fin.strftime('%m-%d'))]
+    df_filtre  = df_filtre.drop("Mois-Jour", axis=1)
     return df_filtre
 
 def apply_fct (df, func):
@@ -110,6 +111,78 @@ def calc_nb_episode(df, seuil, signe, nb_j_min):
     return df_final
 
 
+def plot_climate_strips_tania(df, df_drias, indicateur, periode_start, periode_end,  dict_indicateurs, moy_ref, start_year_ref, end_year_ref):
+    fig = go.Figure()
+
+    fig.add_bar(x=df['Année'], y=df['ANOM_'+indicateur], name=f'{indicateur}', marker=dict(color=df[indicateur], coloraxis="coloraxis"))
+    fig.update_layout(coloraxis=dict(colorscale='RdYlBu_r'), width=1000)
+    fig.update_traces(hovertemplate='Année: %{x}<br>Anomalie: %{y:.1f}°')
+    
+    fig.update_layout(title=f'{dict_indicateurs[indicateur]} entre le 01-07 et le 30-09.<br>Écart à la moyenne de référence 1951 à 1980',
+                      xaxis_title="Année", yaxis_title="Anomalie (Nombre de jours)", width=1000)
+    
+    fig.update_yaxes(title_text="Anomalie (°C)", 
+                     tickvals=[0], 
+                     ticktext=[f'Moyenne: {moy_ref:.2f} '])
+
+    fig.update_traces(hovertemplate='Année: %{x}<br>Anomalie: %{y:.1f}°')
+
+    # Ajout de la deuxième partie du graphique
+    fig2 = px.line(df_drias, x='Année', y='rolling_avg', labels={'rolling_avg': 'Écart à la moyenne (°C)', "Année" : "Année"}, color_discrete_sequence=['green'],
+              title=f'{dict_indicateurs[indicateur]} entre le {periode_start} et le {periode_end}.<br>Écart à la moyenne de référence {start_year_ref}-{end_year_ref+30}')
+    fig2.add_scatter(x=df_drias['Année'], y=df_drias['avg + std'], mode='lines', line=dict(width=0), fill='tonexty')
+    fig2.add_scatter(x=df_drias['Année'], y=df_drias['avg - std'], mode='lines', line=dict(width=0), fill='tonexty')
+    #fig2.add_bar(x=df['Année'], y=df['ANOM_'+indicateur], name=f'{indicateur} (°C)', marker=dict(color=df_drias[indicateur], coloraxis="coloraxis"))
+    fig2.update_layout(coloraxis=dict(colorscale='RdYlBu_r'))
+    fig2.update_traces(hovertemplate='Année: %{x}<br>Anomalie: %{y:.1f}°')
+    
+    for data in fig2.data:
+        fig.add_trace(data)
+
+    return fig
+
+
+def moyenne_T_Q(df, indic):
+    df_periode = df[(df['Année'] >= 1951) & (df['Année'] <= 1980)]
+    
+    moyenne = df_periode[indic].mean()
+    
+    return moyenne
+
+
+def calc_relatif_value(df, indicateur, moyenne_ref):
+    df['ANOM_'+indicateur] = df[indicateur] - moyenne_ref
+    return df
+
+
+def main_indic(df_mf, df_drias, indicateur, seuil, periode_start, periode_end, dict_indicateurs, signe):
+
+    #df = filtre_temporel_periode(df, periode_start, periode_end)
+    #df_2 = calc_nb_j(df, seuil, signe)
+    #moy_ref = moyenne_T_Q(df_2, indicateur)
+    #df_2 = calc_relatif_value(df_2, indicateur, moy_ref)
+    #fig = plot_climate_strips(df_2, indicateur, periode_start, periode_end, dict_indicateurs, moy_ref)
+
+
+    df = filtre_temporel_periode(df_mf, periode_start, periode_end)
+    df_drias = filtre_temporel_periode(df_drias, periode_start, periode_end)
+
+    df_mf = calc_nb_j(df_mf, seuil, signe)
+    moy_ref = moyenne_T_Q(df_mf, indicateur)
+    df_mf = calc_relatif_value(df_mf, indicateur, moy_ref)
+
+
+    df_drias = calc_nb_j(df_drias, seuil, signe)
+    moy_ref_drias = moyenne_T_Q(df_drias, indicateur)
+    df_drias = calc_relatif_value(df_drias, indicateur, moy_ref_drias)
+    df_drias["rolling_avg"] = df_drias[indicateur].rolling(window=30).mean() - 15
+    df_drias["rolling_std"] = df_drias[indicateur].rolling(window=30).std() 
+    df_drias["avg + std"]  = df_drias["rolling_avg"] + df_drias["rolling_std"]
+    df_drias["avg - std"] = df_drias["rolling_avg"] - df_drias["rolling_std"]
+    fig = plot_climate_strips_tania(df_mf, df_drias, indicateur, periode_start, periode_end, dict_indicateurs, moy_ref, 1951, 1980)
+
+
+    return fig
 
 #paul-etienne
 def create_df_index_var_metier (df_index, df_var_metier):
