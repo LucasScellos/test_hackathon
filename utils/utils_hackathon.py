@@ -110,7 +110,6 @@ def plot_climate_strip(
     end_year_ref,
 ):
     fig = go.Figure()
-    print(dict_indicateurs)
     fig.add_bar(
         x=df["Année"],
         y=df["ANOM_" + indicateur],
@@ -489,7 +488,73 @@ def main_inspect_csv(df_ind, df_mf, df_drias):
     return df_1995, df_2030, df_2050
 
 
-def show_box_plot(df95, df30, df50):
+def show_serie_tempo(
+    df_metier, df_mf, variable_metier, unite_mesure_mf, unite_mesure_bus, indicateur_mf
+):
+    df_mf = df_mf.merge(df_metier, on="Année")[df_mf.columns]
+    fig = go.Figure()
+
+    # Ajout de la courbe pour df_m
+    fig.add_trace(
+        go.Scatter(
+            x=df_mf["Année"],
+            y=df_mf["index"],
+            mode="lines+markers",
+            name=indicateur_mf,
+            yaxis="y",
+        )
+    )
+
+    # Ajout de la courbe pour df_metier
+    fig.add_trace(
+        go.Scatter(
+            x=df_metier["Année"],
+            y=df_metier["var_buis"],
+            mode="lines",
+            name=variable_metier,
+            yaxis="y2",
+        )
+    )
+
+    ## Personnalisation des légendes
+    fig.update_layout(
+        title={
+            "text": f"Evolution de la {indicateur_mf.lower()} et de la {variable_metier.lower()} en fonction du temps."
+        },
+        legend=dict(
+            title="Légende",
+            # x=0.01, y=0.99,
+            bgcolor="rgba(255, 255, 255, 0.5)",
+            bordercolor="black",
+            borderwidth=1,
+        ),
+        legend2=dict(
+            title="Légende 2",
+            # x=0.01, y=0.95,
+            bgcolor="rgba(255, 255, 255, 0.5)",
+            bordercolor="black",
+            borderwidth=1,
+        ),
+    )
+
+    # Ajout du double axe y
+    fig.update_layout(
+        yaxis2=dict(
+            title=f"{variable_metier}" + unite_mesure_mf, overlaying="y", side="right"
+        )
+    )
+
+    ## Ajout des labels pour les axes
+    fig.update_layout(
+        xaxis_title="Année",
+        yaxis_title=f"{indicateur_mf}" + unite_mesure_mf,
+        yaxis2_title=f"{variable_metier}" + "("+unite_mesure_bus+")",
+    )
+
+    return fig
+
+
+def show_box_plot(df95, df30, df50, scenario, variable_metier, unite_mesure):
 
     fig = go.Figure()
 
@@ -527,8 +592,8 @@ def show_box_plot(df95, df30, df50):
     )
 
     fig.update_layout(
-        title="Box Plot de la Qualité du vin pour chaque horizon pour le scenario RCP8.5",
-        yaxis_title="Qualité",
+        title=f"Box Plot de la {variable_metier} ({unite_mesure}) pour chaque horizon pour le scenario {scenario}",
+        yaxis_title=f"{variable_metier} ({unite_mesure})",
         xaxis_title="Horizons",
     )
 
@@ -542,3 +607,44 @@ def validate_date(date_text):
         return True
     except ValueError:
         return False
+
+
+text_explication_fin = """     
+- **Données brutes collectées :**
+    - Données quotidiennes du modèle de simulation des schémas de surface (Safran - Isba) (pour l’instant uniquement les températures, mais précipitations, humidité et vents envisagés)
+    - Données DRIAS : Projections climatiques régionalisées réalisées dans les laboratoires français de modélisation du climat
+    - Données externes importables via l’interface  
+
+    
+- **Les données sont préparées et traitées afin de permettre la production d’indicateurs personnalisés sur l’historique, selon les scénarios climatiques et sur une période temporelle personnalisée (été, hiver, mois de mars, ..) :**
+    - Température maximal, minimum et moyenne
+    - Nombre de jours dont la température moyenne dépasse un seuil à définir
+    - Nombre de période de jours dont la température moyenne dépasse un seuil à définir
+    - Comparaison et corrélation par rapport aux données externes importés
+
+- **Via une interface web streamlit, il est possible de:**
+    - Importer des données externes utiles pour le métier
+    - Personnaliser les indicateurs (période temporelle, seuil, etc..)
+    - Visualiser les indicateurs sous forme de graphique ou de KPI et de les exporter
+              
+- **Impact envisagé :** 
+    - La solution permet de produire simplement des indicateurs personnalisés sur les données d’historiques météos, les projections climatiques et des données externes**
+    """
+
+
+def load_data():
+    return pd.read_csv("data/qualite_vin.csv")
+
+
+data = load_data()
+
+
+def download_csv():
+    csv = data.to_csv(index=False)
+    return csv
+
+def compute_correlation(df_indicateur, df_metier):
+    df_merge = df_indicateur.merge(df_metier, on = "Année")
+    res = df_merge.corr()
+    correlation = res.loc["var_buis", "index"]
+    return correlation
